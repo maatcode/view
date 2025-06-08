@@ -3,14 +3,16 @@ declare(strict_types=1);
 
 namespace Maatcode\View;
 
-
-use Exception;
 use http\Exception\UnexpectedValueException;
 use Maatcode\Application\Http\Request;
 use Throwable;
 
-class View implements ViewInterface
+/**
+ *
+ */
+class View
 {
+
     /**
      * @var string
      */
@@ -24,7 +26,7 @@ class View implements ViewInterface
      */
     protected array $config;
     /**
-     * @var Request
+     * @var \Maatcode\Application\Http\Request
      */
     protected Request $request;
     /**
@@ -38,26 +40,21 @@ class View implements ViewInterface
     /**
      * @var array
      */
-    private array $attributes = [];
+    protected array $properties = [];
 
     /**
      * @param array $data
-     * @param array $params
+     *
      * @return array|void
+     * @throws \Throwable
      */
-    public function render(array $data = [], array $params = [])
+    public function render(array $data = [])
     {
         $content = '';
         $view = $this->request->getAction();
         if (!$this->isDisableView())
         {
-            try
-            {
-                $content = $this->createView($view, $data);
-            } catch (Throwable $e)
-            {
-                var_dump($e->getMessage());
-            }
+            $content = $this->createView($view, $data);
         }
         else
         {
@@ -76,6 +73,7 @@ class View implements ViewInterface
     /**
      * @param $view
      * @param array $data
+     *
      * @return false|string|null
      */
     public function createView($view, array $data = []): false|string|null
@@ -83,7 +81,7 @@ class View implements ViewInterface
         $this->content = '';
         foreach ($data as $key => $value)
         {
-            $this->attributes[$key] = $value;
+            $this->$key = $value;
         }
         $path = $this->getConfig()[strtolower($this->getRequest()->getModule())]['view']['template_path'] ?? null;
         if ($path)
@@ -93,7 +91,7 @@ class View implements ViewInterface
                 ob_start();
                 $includeReturn = require_once $path . $view . '.phtml';
                 $this->content = ob_get_clean();
-            } catch (Throwable|Exception $ex)
+            } catch (Throwable $ex)
             {
                 ob_end_clean();
                 throw $ex;
@@ -121,6 +119,7 @@ class View implements ViewInterface
 
     /**
      * @param $layout
+     *
      * @return $this
      */
     public function setLayout($layout): View
@@ -132,13 +131,14 @@ class View implements ViewInterface
     /**
      * @return array
      */
-    public function getConfig(): array
+    public function getConfig()
     {
         return $this->config;
     }
 
     /**
      * @param $config
+     *
      * @return $this
      */
     public function setConfig($config): View
@@ -148,7 +148,7 @@ class View implements ViewInterface
     }
 
     /**
-     * @return Request
+     * @return \Maatcode\Application\Http\Request
      */
     public function getRequest(): Request
     {
@@ -156,7 +156,8 @@ class View implements ViewInterface
     }
 
     /**
-     * @param Request $request
+     * @param \Maatcode\Application\Http\Request $request
+     *
      * @return $this
      */
     public function setRequest(Request $request): View
@@ -175,6 +176,7 @@ class View implements ViewInterface
 
     /**
      * @param bool $disableLayout
+     *
      * @return $this
      */
     public function setDisableLayout(bool $disableLayout): View
@@ -193,6 +195,7 @@ class View implements ViewInterface
 
     /**
      * @param bool $disableView
+     *
      * @return $this
      */
     public function setDisableView(bool $disableView): View
@@ -202,21 +205,25 @@ class View implements ViewInterface
     }
 
     /**
-     * @param string $name
-     * @param mixed $value
+     * @param $key
+     * @param $value
+     *
      * @return void
      */
-    public function __set(string $name, mixed $value): void
+    public function __set($key, $value): void
     {
-        $this->attributes[$name] = $value;
+        $this->properties[$key] = $value;
     }
 
     /**
-     * @param string $name
-     * @return mixed
+     * @param $key
+     *
+     * @return string
      */
-    public function __get(string $name): mixed
+    public function __get($key): string
     {
-        return $this->attributes[$name] ?? null;
+        return $this->properties[$key] ?? '';
     }
+
+
 }
